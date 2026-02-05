@@ -33,6 +33,39 @@ func main() {
 		input = strings.TrimSpace(input)
 
 		switch input {
+		// Register
+		case "1":
+			fmt.Print("Full Name: ")
+			fullName, _ := reader.ReadString('\n')
+			fullName = strings.TrimSpace(fullName)
+
+			fmt.Print("Password: ")
+			password, _ := reader.ReadString('\n')
+			password = strings.TrimSpace(password)
+
+			fmt.Println("Role:")
+			fmt.Println("1. Admin")
+			fmt.Println("2. User")
+			fmt.Print("Choose role (1/2): ")
+
+			roleStr, _ := reader.ReadString('\n')
+			roleStr = strings.TrimSpace(roleStr)
+
+			roleID := 2
+			if roleStr == "1" {
+				roleID = 1
+			}
+
+			u, err := handler.RegisterUser(db, fullName, password, roleID)
+			if err != nil {
+				fmt.Println("Register gagal:", err)
+				continue
+			}
+
+			fmt.Println("\nRegister berhasil!")
+			fmt.Println("User ID:", u.UserId)
+
+		// Login
 		case "2":
 			fmt.Print("Full Name: ")
 			fullName, _ := reader.ReadString('\n')
@@ -48,10 +81,14 @@ func main() {
 				continue
 			}
 
-			if strings.ToLower(u.Fullname) == "admin" {
+			fmt.Println("\nLogin berhasil. Welcome,", u.Fullname)
+			switch u.RoleID {
+			case 1:
 				admin.Menu(reader, u)
-			} else {
+			case 2:
 				user.Menu(reader, u)
+			default:
+				fmt.Println("Role tidak dikenal")
 			}
 
 		case "3":
