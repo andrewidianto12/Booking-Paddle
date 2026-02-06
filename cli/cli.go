@@ -86,7 +86,8 @@ func main() {
 			case 1:
 				admin.Menu(reader, u)
 			case 2:
-				user.Menu(reader, u)
+    			user.Menu(reader, db, u)
+
 			default:
 				fmt.Println("Role tidak dikenal")
 			}
