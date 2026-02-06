@@ -14,13 +14,13 @@ import (
 func AddCourt(db *sql.DB) {
 	reader := bufio.NewReader(os.Stdin)
 
-	var court entity.Courts
+	var court entity.Court
 	fmt.Println("\n=== ADD COURT ===")
 
 	// Read court name input from cli
 	fmt.Print("Court Name: ")
 	name, _ := reader.ReadString('\n')
-	court.Name = strings.TrimSpace(name)
+	court.CourtName = strings.TrimSpace(name)
 
 	// Read location input from cli
 	fmt.Print("Location: ")
@@ -39,7 +39,7 @@ func AddCourt(db *sql.DB) {
 	court.Status = "AVAILABLE"
 
 	query := `INSERT INTO courts (court_name, location, price_per_hour, status) VALUES (?, ?, ?, ?)`
-	_, err = db.Exec(query, court.Name, court.Location, court.PricePerHour, court.Status)
+	_, err = db.Exec(query, court.CourtName, court.Location, court.PricePerHour, court.Status)
 	if err != nil {
 		fmt.Println("Failed to add court:", err)
 		return
@@ -51,7 +51,7 @@ func AddCourt(db *sql.DB) {
 func AddTimeSlot(db *sql.DB) {
 	reader := bufio.NewReader(os.Stdin)
 
-	var timeslot entity.TimeSlots
+	var timeslot entity.TimeSlot
 
 	fmt.Println("\n--- ADD TIME SLOT ---")
 
@@ -79,7 +79,7 @@ func UpdateCourt(db *sql.DB) {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("\n=== UPDATE COURT ===")
 
-	var court entity.Courts
+	var court entity.Court
 
 	// Read Court ID input from cli
 	fmt.Print("Input Court ID: ")
@@ -90,12 +90,12 @@ func UpdateCourt(db *sql.DB) {
 		fmt.Println("Invalid Court ID")
 		return
 	}
-	court.ID = courtID
+	court.CourtID = courtID
 
 	// Fetch current court data
 	query := `SELECT court_name, location, price_per_hour, status FROM courts WHERE court_id = ?`
-	row := db.QueryRow(query, court.ID)
-	err = row.Scan(&court.Name, &court.Location, &court.PricePerHour, &court.Status)
+	row := db.QueryRow(query, court.CourtID)
+	err = row.Scan(&court.CourtName, &court.Location, &court.PricePerHour, &court.Status)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			fmt.Println("Court ID not found!")
@@ -106,7 +106,7 @@ func UpdateCourt(db *sql.DB) {
 	}
 
 	// Display current values
-	fmt.Println("Current Court Name:", court.Name)
+	fmt.Println("Current Court Name:", court.CourtName)
 	fmt.Println("Current Location:", court.Location)
 	fmt.Println("Current Price per hour:", court.PricePerHour)
 	fmt.Println("Current Status:", court.Status)
@@ -116,7 +116,7 @@ func UpdateCourt(db *sql.DB) {
 	name, _ := reader.ReadString('\n')
 	name = strings.TrimSpace(name)
 	if name != "" {
-		court.Name = name
+		court.CourtName = name
 	}
 
 	// Input new court location
@@ -150,7 +150,7 @@ func UpdateCourt(db *sql.DB) {
 
 	// Update court in database
 	updateQuery := `UPDATE courts SET court_name = ?, location = ?, price_per_hour = ?, status = ? WHERE court_id = ?`
-	result, err := db.Exec(updateQuery, court.Name, court.Location, court.PricePerHour, court.Status, court.ID)
+	result, err := db.Exec(updateQuery, court.CourtName, court.Location, court.PricePerHour, court.Status, court.CourtID)
 	if err != nil {
 		fmt.Println("Failed to update court:", err)
 		return
@@ -168,7 +168,7 @@ func UpdateTimeSlot(db *sql.DB) {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("\n=== UPDATE TIME SLOT ===")
 
-	var timeslot entity.TimeSlots
+	var timeslot entity.TimeSlot
 
 	// Read Time Slot ID
 	fmt.Print("Input Time Slot ID: ")
@@ -446,9 +446,9 @@ func BookingReport(db *sql.DB) {
 
 	for rows.Next() { // iterate through result set
 		var booking entity.Booking
-		rows.Scan(&booking.ID, &booking.UserName, &booking.CourtName, &booking.Date, &booking.StartTime, &booking.EndTime, &booking.Status, &booking.TotalPrice)
+		rows.Scan(&booking.BookingID, &booking.UserName, &booking.CourtName, &booking.BookingDate, &booking.StartTime, &booking.EndTime, &booking.Status, &booking.TotalPrice)
 		fmt.Printf("%d | %s | %s | %s | %s-%s | %s | %.2f\n",
-			booking.ID, booking.UserName, booking.CourtName, booking.Date.Format("2006-01-02"), booking.StartTime, booking.EndTime, booking.Status, booking.TotalPrice) // print row
+			booking.BookingID, booking.UserName, booking.CourtName, booking.BookingDate.Format("2006-01-02"), booking.StartTime, booking.EndTime, booking.Status, booking.TotalPrice) // print row
 	}
 }
 
