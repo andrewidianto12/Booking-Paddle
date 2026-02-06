@@ -30,11 +30,11 @@ func Menu(reader *bufio.Reader, db *sql.DB, user *entity.LoginUser) {
 
 		case "2":
 			fmt.Println("Book Court ")
-			handler.CreateBooking(db, user.UserId)
+			handler.CreateBooking(db, user)
 
 		case "3":
 			fmt.Println("My Bookings ")
-			handler.ViewMyBookings(db, user.UserId)
+			handler.ViewMyBookings(db, user)
 
 		case "4":
 			fmt.Println("Logout berhasil")

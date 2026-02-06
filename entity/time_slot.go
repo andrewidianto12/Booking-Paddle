@@ -1,7 +1,7 @@
 package entity
 
-type TimeSlots struct {
+type TimeSlot struct {
 	TimeSlotID int
-	StartTime  string
-	EndTime    string
+	StartTime  string 
+	EndTime    string 
 }
