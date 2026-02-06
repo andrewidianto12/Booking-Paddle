@@ -1,10 +1,13 @@
 package entity
 
+import "time"
+
 type User struct {
-	UserId   int
-	Username string
-	Email    string
-	Password string
+	ID        int
+	FullName  string
+	RoleID    int
+	RoleName  string
+	CreatedAt time.Time
 }
 
 type LoginUser struct {
