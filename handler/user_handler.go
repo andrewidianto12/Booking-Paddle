@@ -3,7 +3,11 @@ package handler
 import (
 	"database/sql"
 	"errors"
-
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
+	"time"
 	"github.com/andrewidianto/Paddle-Booking/entity"
 )
 
@@ -58,4 +62,104 @@ func LoginUser(db *sql.DB, fullName, password string) (*entity.LoginUser, error)
 	}
 
 	return &user, nil
+}
+
+func ViewCourts(db *sql.DB) {
+	rows, err := db.Query(`
+		SELECT court_id, court_name, location, price_per_hour, status
+		FROM courts
+		WHERE status = 'AVAILABLE'
+	`)
+	if err != nil {
+		fmt.Println("Error fetching courts:", err)
+		return
+	}
+	defer rows.Close()
+
+	fmt.Println("\n=== AVAILABLE COURTS ===")
+	for rows.Next() {
+		var id int
+		var name, location, status string
+		var price float64
+
+		if err := rows.Scan(&id, &name, &location, &price, &status); err != nil {
+			fmt.Println("Scan error:", err)
+			return
+		}
+
+		fmt.Printf("ID: %d | %s | %s | Rp%.2f/hour\n",
+			id, name, location, price)
+	}
+}
+
+func CreateBooking(db *sql.DB, userID int) {
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Print("Court ID: ")
+	courtID, _ := reader.ReadString('\n')
+
+	fmt.Print("Time Slot ID: ")
+	timeSlotID, _ := reader.ReadString('\n')
+
+	fmt.Print("Booking Date (YYYY-MM-DD): ")
+	dateStr, _ := reader.ReadString('\n')
+
+	courtID = strings.TrimSpace(courtID)
+	timeSlotID = strings.TrimSpace(timeSlotID)
+	dateStr = strings.TrimSpace(dateStr)
+
+	bookingDate, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		fmt.Println("Invalid date format")
+		return
+	}
+
+	_, err = db.Exec(`
+		INSERT INTO bookings (user_id, court_id, booking_date, time_slot_id)
+		VALUES (?, ?, ?, ?)
+	`, userID, courtID, bookingDate, timeSlotID)
+
+	if err != nil {
+		fmt.Println("Failed to create booking:", err)
+		return
+	}
+
+	fmt.Println("✅ Booking berhasil dibuat")
+}
+
+
+func ViewMyBookings(db *sql.DB, userID int) {
+	rows, err := db.Query(`
+		SELECT b.booking_id, c.court_name, b.booking_date, b.status
+		FROM bookings b
+		JOIN courts c ON b.court_id = c.court_id
+		WHERE b.user_id = ?
+		ORDER BY b.booking_date DESC
+	`, userID)
+
+	if err != nil {
+		fmt.Println("Error fetching bookings:", err)
+		return
+	}
+	defer rows.Close()
+
+	fmt.Println("\n=== MY BOOKINGS ===")
+	for rows.Next() {
+		var bookingID int
+		var courtName, status string
+		var bookingDate time.Time
+
+		if err := rows.Scan(&bookingID, &courtName, &bookingDate, &status); err != nil {
+			fmt.Println("Scan error:", err)
+			return
+		}
+
+		fmt.Printf(
+			"ID: %d | Court: %s | Date: %s | Status: %s\n",
+			bookingID,
+			courtName,
+			bookingDate.Format("2006-01-02"),
+			status,
+		)
+	}
 }
