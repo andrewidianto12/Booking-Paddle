@@ -1,15 +1,17 @@
 package handler
 
 import (
+	"bufio"
 	"database/sql"
 	"errors"
-	"bufio"
 	"fmt"
 	"os"
-	"strconv" 
+	"strconv"
 	"strings"
 	"time"
+
 	"github.com/andrewidianto/Paddle-Booking/entity"
+	"github.com/olekukonko/tablewriter"
 )
 
 func RegisterUser(db *sql.DB, fullname, password string, roleID int) (*entity.RegisterUser, error) {
@@ -77,7 +79,10 @@ func ViewCourts(db *sql.DB) {
 	}
 	defer rows.Close()
 
-	fmt.Println("\n=== AVAILABLE COURTS ===")
+	table := tablewriter.NewWriter(os.Stdout)
+
+	table.Header([]string{"ID", "Court Name", "Location", "Price/Hour", "Status"})
+
 	for rows.Next() {
 		var id int
 		var name, location, status string
@@ -88,9 +93,23 @@ func ViewCourts(db *sql.DB) {
 			return
 		}
 
-		fmt.Printf("ID: %d | %s | %s | Rp%.2f/hour\n",
-			id, name, location, price)
+		// append ke tabel
+		table.Append([]string{
+			fmt.Sprintf("%d", id),
+			name,
+			location,
+			fmt.Sprintf("Rp %.2f", price),
+			status,
+		})
 	}
+
+	if err := rows.Err(); err != nil {
+		fmt.Println("Rows error:", err)
+		return
+	}
+
+	fmt.Println("\n=== AVAILABLE COURTS ===")
+	table.Render()
 }
 
 func CreateBooking(db *sql.DB, user *entity.LoginUser) {
@@ -139,8 +158,6 @@ func CreateBooking(db *sql.DB, user *entity.LoginUser) {
 	fmt.Println("Booking berhasil dibuat")
 }
 
-
-
 func ViewMyBookings(db *sql.DB, user *entity.LoginUser) {
 	rows, err := db.Query(`
 		SELECT b.booking_id, c.court_name, b.booking_date, b.status
@@ -155,7 +172,10 @@ func ViewMyBookings(db *sql.DB, user *entity.LoginUser) {
 	}
 	defer rows.Close()
 
-	fmt.Println("\n=== MY BOOKINGS ===")
+	table := tablewriter.NewWriter(os.Stdout)
+
+	table.Header([]string{"Booking ID", "Court", "Date", "Status"})
+
 	for rows.Next() {
 		var bookingID int
 		var courtName, status string
@@ -166,12 +186,19 @@ func ViewMyBookings(db *sql.DB, user *entity.LoginUser) {
 			return
 		}
 
-		fmt.Printf(
-			"ID: %d | Court: %s | Date: %s | Status: %s\n",
-			bookingID,
+		table.Append([]string{
+			fmt.Sprintf("%d", bookingID),
 			courtName,
 			bookingDate.Format("2006-01-02"),
 			status,
-		)
+		})
 	}
+
+	if err := rows.Err(); err != nil {
+		fmt.Println("Rows error:", err)
+		return
+	}
+
+	fmt.Println("\n=== MY BOOKINGS ===")
+	table.Render()
 }

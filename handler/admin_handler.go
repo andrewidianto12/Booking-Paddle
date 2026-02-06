@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/andrewidianto/Paddle-Booking/entity"
+	"github.com/olekukonko/tablewriter"
 )
 
 func AddCourt(db *sql.DB) {
@@ -381,55 +382,63 @@ func UpdateUser(db *sql.DB) {
 }
 
 func UserReport(db *sql.DB) {
-	// Query to get all users
+	// SQL query to fetch users
 	rows, err := db.Query(`
-		SELECT 
-			u.user_id,
-			u.full_name,
-			r.role_name,
-			u.created_at
-		FROM users u
-		JOIN roles r ON r.role_id = u.role_id
-		ORDER BY u.user_id
-	`)
-
+        SELECT 
+            u.user_id,
+            u.full_name,
+            r.role_name,
+            u.created_at
+        FROM users u
+        JOIN roles r ON r.role_id = u.role_id
+        ORDER BY u.user_id
+    `)
 	if err != nil {
 		fmt.Println("Failed to fetch users:", err)
 		return
 	}
-
 	defer rows.Close()
 
-	fmt.Println("\n=== USER LIST ===")
-	// Iterate through result rows
-	for rows.Next() {
-		var users entity.User
+	// Initialize tablewriter
+	table := tablewriter.NewWriter(os.Stdout)
+	table.Header("ID", "Full Name", "Role", "Created At")
 
-		// Scan database row into entity user
-		err := rows.Scan(&users.ID, &users.FullName, &users.RoleName, &users.CreatedAt)
+	// Iterate through database rows
+	for rows.Next() {
+		var user entity.User
+		err := rows.Scan(&user.ID, &user.FullName, &user.RoleName, &user.CreatedAt)
 		if err != nil {
 			fmt.Println("Error scanning row:", err)
 			return
 		}
 
-		// Print all users
-		fmt.Printf(
-			"ID: %d | Name: %s | Role: %s | Created: %s\n",
-			users.ID,
-			users.FullName,
-			users.RoleName,
-			users.CreatedAt.Format("2006-01-02 15:04"),
-		)
-
+		// Append user data to table
+		table.Append([]string{
+			fmt.Sprint(user.ID),
+			user.FullName,
+			user.RoleName,
+			user.CreatedAt.Format("2006-01-02 15:04"),
+		})
 	}
+
+	// Render the table to terminal
+	table.Render()
 }
 
 func BookingReport(db *sql.DB) {
 	fmt.Println("\n=== BOOKING REPORT ===")
 
-	// SQL query to get booking details with joined tables
+	// SQL query to fetch booking
 	query := `
-        SELECT b.booking_id, u.full_name, c.court_name, DATE(b.booking_date) AS booking_date, t.start_time, t.end_time, b.status, b.total_price
+        SELECT 
+            b.booking_id,
+            u.full_name,
+            c.court_name,
+            DATE(b.booking_date) AS booking_date,
+            t.start_time,
+            t.end_time,
+            b.status,
+            b.total_price
         FROM bookings b
         LEFT JOIN users u ON b.user_id = u.user_id
         LEFT JOIN courts c ON b.court_id = c.court_id
@@ -442,50 +451,107 @@ func BookingReport(db *sql.DB) {
 		return
 	}
 	defer rows.Close()
-	fmt.Println("BookingID | User | Court | Date | Time | Status | Total Price")
 
-	for rows.Next() { // iterate through result set
+	// Initialize tablewriter
+	table := tablewriter.NewWriter(os.Stdout)
+	table.Header("BookingID", "User", "Court", "Date", "Time", "Status", "Total Price")
+
+	// Iterate through database rows
+	for rows.Next() {
 		var booking entity.Booking
-		rows.Scan(&booking.BookingID, &booking.UserName, &booking.CourtName, &booking.BookingDate, &booking.StartTime, &booking.EndTime, &booking.Status, &booking.TotalPrice)
-		fmt.Printf("%d | %s | %s | %s | %s-%s | %s | %.2f\n",
-			booking.BookingID, booking.UserName, booking.CourtName, booking.BookingDate.Format("2006-01-02"), booking.StartTime, booking.EndTime, booking.Status, booking.TotalPrice) // print row
+		err := rows.Scan(&booking.BookingID, &booking.UserName, &booking.CourtName, &booking.BookingDate, &booking.StartTime, &booking.EndTime, &booking.Status, &booking.TotalPrice)
+		if err != nil {
+			fmt.Println("Error scanning booking:", err)
+			return
+		}
+
+		// Format date and time
+		dateStr := booking.BookingDate.Format("2006-01-02")
+		timeStr := fmt.Sprintf("%s-%s", booking.StartTime, booking.EndTime)
+
+		// Append booking data to table
+		table.Append([]string{
+			fmt.Sprint(booking.BookingID),
+			booking.UserName,
+			booking.CourtName,
+			dateStr,
+			timeStr,
+			booking.Status,
+			fmt.Sprintf("%.2f", booking.TotalPrice),
+		})
 	}
+
+	// Render the table to terminal
+	table.Render()
 }
 
 func DailyRevenue(db *sql.DB) {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Enter date (YYYY-MM-DD): ") // prompt for date
-	date, _ := reader.ReadString('\n')     // read date
-	date = strings.TrimSpace(date)         // trim spaces
+	fmt.Print("Enter date (YYYY-MM-DD): ")
 
+	// Read the input date from cli
+	date, _ := reader.ReadString('\n')
+	date = strings.TrimSpace(date)
+
+	// SQL query to calculate total revenue and total bookings for the given date
 	query := `
-            SELECT SUM(total_price) as total_revenue, COUNT(*) as total_bookings
-            FROM bookings
-            WHERE booking_date = ? AND status = 'COMPLETED'
-        `
+        SELECT SUM(total_price) as total_revenue, COUNT(*) as total_bookings
+        FROM bookings
+        WHERE booking_date = ? AND status = 'COMPLETED'
+    `
 
-	var revenue float64
-	var total int
-	row := db.QueryRow(query, date) // execute query with parameter
-	row.Scan(&revenue, &total)      // scan result
-	fmt.Printf("Date: %s | Total Bookings: %d | Total Revenue: %.2f\n", date, total, revenue)
+	var report entity.Report
+	// Execute the query
+	row := db.QueryRow(query, date)
+	err := row.Scan(&report.TotalRevenue, &report.TotalBooking) // Scan the result into variables
+	if err != nil {
+		fmt.Println("Error fetching daily revenue:", err)
+		return
+	}
+
+	// Initialize tablewriter to display the results in a table
+	table := tablewriter.NewWriter(os.Stdout)
+	table.Header("Date", "Total Bookings", "Total Revenue")
+	table.Append([]string{
+		date,
+		fmt.Sprint(report.TotalBooking),
+		fmt.Sprintf("%.2f", report.TotalRevenue),
+	})
+	table.Render()
 }
 
 func MonthlyRevenue(db *sql.DB) {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Enter month (YYYY-MM): ") // prompt for month
-	month, _ := reader.ReadString('\n')  // read month
-	month = strings.TrimSpace(month)     // trim spaces
+	fmt.Print("Enter month (YYYY-MM): ")
 
+	// Read the input month from cli
+	month, _ := reader.ReadString('\n')
+	month = strings.TrimSpace(month)
+
+	// SQL query to calculate total revenue and total bookings for the given month
 	query := `
-            SELECT SUM(total_price) as total_revenue, COUNT(*) as total_bookings
-            FROM bookings
-            WHERE DATE_FORMAT(booking_date, '%Y-%m') = ? AND status = 'COMPLETED'
-        `
+        SELECT SUM(total_price) as total_revenue, COUNT(*) as total_bookings
+        FROM bookings
+        WHERE DATE_FORMAT(booking_date, '%Y-%m') = ? AND status = 'COMPLETED'
+    `
 
-	var revenue float64
-	var total int
-	row := db.QueryRow(query, month)                                                            // execute query
-	row.Scan(&revenue, &total)                                                                  // scan result
-	fmt.Printf("Month: %s | Total Bookings: %d | Total Revenue: %.2f\n", month, total, revenue) // print result
+	var report entity.Report
+
+	// Execute the query
+	row := db.QueryRow(query, month)
+	err := row.Scan(&report.TotalRevenue, &report.TotalBooking)
+	if err != nil {
+		fmt.Println("Error fetching monthly revenue:", err)
+		return
+	}
+
+	// Initialize tablewriter to display the results in a table
+	table := tablewriter.NewWriter(os.Stdout)
+	table.Header("Month", "Total Bookings", "Total Revenue")
+	table.Append([]string{
+		month,
+		fmt.Sprint(report.TotalBooking),
+		fmt.Sprintf("%.2f", report.TotalRevenue),
+	})
+	table.Render()
 }
