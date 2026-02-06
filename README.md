@@ -1,98 +1,99 @@
-Sport Booking CLI (Padel Court Booking)
+## 🏓 Padel Booking CLI Application
 
-Sport Booking CLI adalah aplikasi Command Line Interface (CLI) berbasis Golang untuk melakukan pemesanan lapangan olahraga (Padel Court). Aplikasi ini mendukung role Admin dan User, terhubung ke MySQL, dan menerapkan struktur project yang terpisah antara CLI, business logic, dan entity.
+Padel Booking CLI Application adalah aplikasi Command Line Interface (CLI) berbasis Golang untuk mengelola sistem pemesanan lapangan padel.
+Aplikasi ini dirancang untuk mensimulasikan sistem booking nyata dengan fitur role-based access (Admin & User), terintegrasi langsung dengan database MySQL.
 
-Fitur Utama
-👤 User
+## 📌 Business Case
 
-Register & Login
+Banyak tempat olahraga masih mengelola pemesanan lapangan secara manual (WhatsApp, catatan kertas, atau Excel), yang sering menyebabkan:
 
-Melihat daftar lapangan yang tersedia
+1. Double booking
+2. Kesalahan jadwal
+3. Sulit membuat laporan pendapatan
 
-Melakukan booking lapangan
+## 🎯 Objectives
 
-Melihat riwayat booking pribadi
+Membangun aplikasi CLI menggunakan Golang
 
-Logout
+Mengimplementasikan CRUD database MySQL
 
-🛠 Admin
+Menerapkan clean folder structure
+
+Menggunakan konsep role (Admin & User)
+
+Menghindari double booking dengan database constraint
+
+## 👥 User Roles
+
+### Admin
 
 Login sebagai admin
 
-Mengelola data lapangan
-
 Melihat data booking
 
-Membuat laporan (Daily & Monthly Report)
+Mengelola laporan (daily & monthly)
 
-🏗️ Struktur Folder
-SPORT-BOOKING
-│
-├── cli
-│   ├── admin        # Menu & interaksi CLI untuk admin
-│   └── user         # Menu & interaksi CLI untuk user
-│
-├── config           # Konfigurasi database & environment
-│
-├── database         # SQL schema & query database
-│
-├── entity           # Struct Golang (mapping tabel database)
-│
-├── handler          # Business logic & query database
-│
-├── .env             # Environment variable (DSN database)
-├── go.mod
-├── go.sum
-├── main.go          # Entry point aplikasi
-└── README.md
+### User
 
-🗄️ Database Design
+Registrasi & login
 
-Aplikasi menggunakan beberapa tabel utama:
+Melihat lapangan yang tersedia
 
-roles
+Melakukan booking lapangan
 
-users
+Melihat riwayat booking sendiri
 
-courts
+## ✨ Features
+1. Authentication
+2. Register user
+3. Login user
+4. Role-based menu (Admin / User)
+6. View available courts
+7. Create booking
+8. View my bookings
+9. View all bookings
+10. Generate reports (daily & monthly)
 
-time_slots
+## 🚀 How to Run
 
-bookings
+### 1. Clone Repository
 
-reports
+git clone https://github.com/username/Paddle-Booking.git
+cd Paddle-Booking
 
-Relasi database dirancang dengan foreign key untuk menjaga integritas data dan mencegah double booking pada lapangan dan waktu yang sama.
+### 2. Setup Database
 
-⚙️ Tech Stack
+Buat database MySQL
 
-Golang
+Jalankan file SQL DDL
 
-MySQL
+Isi data awal (roles, courts, time slots)
 
-Github
-
-CLI (Terminal Based App)
-
-🔧 Setup & Installation
-1️⃣ Clone Repository
-git clone https://github.com/username/sport-booking.git
-cd sport-booking
-
-2️⃣ Install Dependency
-go mod tidy
-
-3️⃣ Setup Database
-
-Import SQL schema dari folder database
-
-Pastikan MySQL sudah berjalan
-
-4️⃣ Setup Environment Variable
+### 3. Setup Environment
 
 Buat file .env:
 
-DB_DSN=username:password@tcp(localhost:3306)/sport_booking
+DB_DSN=username:password@tcp(localhost:3306)/padel_booking
 
-5️⃣ Run Application
+### 4. Run Application
+go run main.go🚀 How to Run
+#### 1. Clone Repository
+git clone (https://github.com/andrewidianto12/Booking-Paddle)
+cd Paddle-Booking
+
+#### 2. Setup Database
+
+Buat database MySQL
+
+Jalankan file SQL DDL
+
+Isi data awal (roles, courts, time slots)
+
+#### 3. Setup Environment
+
+Buat file .env:
+
+DB_DSN=username:password@tcp(localhost:3306)/Database
+
+#### 4. Run Application
 go run main.go
