@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv" 
 	"strings"
 	"time"
 	"github.com/andrewidianto/Paddle-Booking/entity"
@@ -92,50 +93,61 @@ func ViewCourts(db *sql.DB) {
 	}
 }
 
-func CreateBooking(db *sql.DB, userID int) {
+func CreateBooking(db *sql.DB, user *entity.LoginUser) {
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Print("Court ID: ")
-	courtID, _ := reader.ReadString('\n')
+	courtIDStr, _ := reader.ReadString('\n')
 
 	fmt.Print("Time Slot ID: ")
-	timeSlotID, _ := reader.ReadString('\n')
+	timeSlotIDStr, _ := reader.ReadString('\n')
 
 	fmt.Print("Booking Date (YYYY-MM-DD): ")
 	dateStr, _ := reader.ReadString('\n')
 
-	courtID = strings.TrimSpace(courtID)
-	timeSlotID = strings.TrimSpace(timeSlotID)
+	courtIDStr = strings.TrimSpace(courtIDStr)
+	timeSlotIDStr = strings.TrimSpace(timeSlotIDStr)
 	dateStr = strings.TrimSpace(dateStr)
+	courtID, err := strconv.Atoi(courtIDStr)
+	if err != nil {
+		fmt.Println("Court ID harus angka")
+		return
+	}
+
+	timeSlotID, err := strconv.Atoi(timeSlotIDStr)
+	if err != nil {
+		fmt.Println("Time Slot ID harus angka")
+		return
+	}
 
 	bookingDate, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
-		fmt.Println("Invalid date format")
+		fmt.Println("Format tanggal salah")
 		return
 	}
 
 	_, err = db.Exec(`
 		INSERT INTO bookings (user_id, court_id, booking_date, time_slot_id)
 		VALUES (?, ?, ?, ?)
-	`, userID, courtID, bookingDate, timeSlotID)
+	`, user.UserId, courtID, bookingDate, timeSlotID)
 
 	if err != nil {
-		fmt.Println("Failed to create booking:", err)
+		fmt.Println("Gagal membuat booking:", err)
 		return
 	}
 
-	fmt.Println("✅ Booking berhasil dibuat")
+	fmt.Println("Booking berhasil dibuat")
 }
 
 
-func ViewMyBookings(db *sql.DB, userID int) {
+
+func ViewMyBookings(db *sql.DB, user *entity.LoginUser) {
 	rows, err := db.Query(`
 		SELECT b.booking_id, c.court_name, b.booking_date, b.status
 		FROM bookings b
 		JOIN courts c ON b.court_id = c.court_id
 		WHERE b.user_id = ?
-		ORDER BY b.booking_date DESC
-	`, userID)
+	`, user.UserId)
 
 	if err != nil {
 		fmt.Println("Error fetching bookings:", err)
