@@ -2,15 +2,15 @@ package user
 
 import (
 	"bufio"
+	"database/sql"
 	"fmt"
 	"strings"
-	"database/sql"
 
 	"github.com/andrewidianto/Paddle-Booking/entity"
 	"github.com/andrewidianto/Paddle-Booking/handler"
 )
 
-func Menu(reader *bufio.Reader, db *sql.DB, user *entity.LoginUser){
+func Menu(reader *bufio.Reader, db *sql.DB, user *entity.LoginUser) {
 
 	for {
 		fmt.Println("\n=== USER MENU ===")

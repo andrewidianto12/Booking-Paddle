@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	godotenv.Load("../.env")
+	godotenv.Load(".env")
 
 	db := config.InitDatabase(os.Getenv("DB_DSN"))
 	defer db.Close()
@@ -84,9 +84,9 @@ func main() {
 			fmt.Println("\nLogin berhasil. Welcome,", u.Fullname)
 			switch u.RoleID {
 			case 1:
-				admin.Menu(reader, u)
+				admin.Menu(reader, db, u)
 			case 2:
-    			user.Menu(reader, db, u)
+				user.Menu(reader, db, u)
 
 			default:
 				fmt.Println("Role tidak dikenal")
